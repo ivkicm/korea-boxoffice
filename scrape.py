@@ -1,4 +1,6 @@
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 from datetime import datetime
 import re
@@ -14,13 +16,10 @@ def parse_english_date(date_str):
             'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
             'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
         }
-        # Entferne Kommas und splitte
         parts = date_str.replace(',', '').split()
         if len(parts) != 3: return None
-        
         m_str, d_str, y_str = parts
         month = months.get(m_str)
-        
         if month:
             return datetime(int(y_str), month, int(d_str))
         return None
@@ -37,52 +36,43 @@ def get_data():
         response = requests.get(URL, headers=headers, timeout=30)
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Laut deinem Quelltext nutzt die Seite TBODYs mit IDs wie 'listTable_0_1', 'listTable_0_2' usw.
-        # Wir suchen genau diese Struktur.
+        # Suche nach TBODYs mit ID Muster listTable_0_X
         tbodies = soup.find_all('tbody', id=re.compile(r'listTable_0_\d+'))
         
         movies = []
         
-        # Nur die ersten 5 Ergebnisse
+        # Nur Top 5
         for tbody in tbodies[:5]:
             row = tbody.find('tr')
             cols = row.find_all('td')
             
-            # --- 1. RANG (Spalte 0) ---
+            # 1. RANG
             rank = cols[0].text.strip()
             
-            # --- 2. TITEL (Spalte 2 - Index 2) ---
-            # Im Quelltext ist Spalte 1 das Bild, Spalte 2 der Text.
-            # Der Titel steht im ersten <p> Tag.
+            # 2. TITEL (aus <p> Tag extrahieren)
             title_cell = cols[2]
             p_tags = title_cell.find_all('p')
             if p_tags:
-                # Der Titel ist im ersten Paragraph, manchmal ist ein Link <a> drin, manchmal nur Text
                 title = p_tags[0].text.strip()
             else:
                 title = title_cell.text.strip()
 
-            # --- 3. TAGE SEIT RELEASE (Spalte 3 - Index 3) ---
+            # 3. TAGE
             days_run = "-"
-            date_text = cols[3].text.strip() # z.B. "Nov 26, 2025"
-            
+            date_text = cols[3].text.strip()
             release_date = parse_english_date(date_text)
             if release_date:
-                # Differenz zu heute berechnen
                 delta = datetime.now() - release_date
                 days_run = delta.days
                 if days_run < 0: days_run = 0
 
-            # --- 4. ADMISSIONS (Spalte 5 - Index 5) ---
-            # Spalte 4 ist Geld ($). Spalte 5 ist Admissions (Besucher).
-            # Inhalt z.B.: "81,924<br/>(5,452,511)"
-            # Wir nutzen get_text mit Separator, um das <br> sauber zu trennen
+            # 4. ADMISSIONS (Spalte 5)
+            # Text säubern, Zeilenumbrüche entfernen
             adm_text = cols[5].get_text(separator='|').strip()
             
             if '|' in adm_text:
                 parts = adm_text.split('|')
                 daily = parts[0].strip()
-                # Total ist oft in Klammern (5,452,511)
                 total = parts[1].replace('(', '').replace(')', '').strip()
             elif '(' in adm_text:
                 parts = adm_text.split('(')
@@ -131,6 +121,7 @@ def generate_html(movies):
 
         .row-container {{ 
             display: grid; 
+            /* Hier definieren wir das Layout */
             grid-template-columns: 80px 1.5fr 100px 1fr 1fr; 
             gap: 15px; 
             height: 100px; 
@@ -140,6 +131,8 @@ def generate_html(movies):
             border: 2px solid #fff; border-radius: 8px; 
             display: flex; flex-direction: column; justify-content: center; 
             padding: 0 15px; background: #0a0a0a; 
+            /* WICHTIG: min-width: 0 verhindert, dass die Box durch langen Text gesprengt wird */
+            min-width: 0;
         }}
         
         .rank-box {{ border-color: #FFD700; align-items: center; }}
@@ -148,7 +141,13 @@ def generate_html(movies):
         .title-box {{ border-color: #ffffff; justify-content: center; }}
         .movie-title {{ 
             font-size: 1.5rem; font-weight: 800; text-transform: uppercase; 
-            line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            line-height: 1.1; 
+            /* Diese 3 Zeilen schneiden den Text ab */
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            width: 100%; /* Nimmt die volle Breite der Box ein */
+            display: block;
         }}
         
         .days-box {{ border-color: #666; align-items: center; }}
@@ -179,7 +178,7 @@ def generate_html(movies):
         html += """
         <div style="border:1px solid red; padding:20px; text-align:center;">
             <h2 style="color:red">DATEN NICHT ERREICHBAR</h2>
-            <p>Konnte die Tabelle nicht parsen.</p>
+            <p>Die KOBIZ-Webseite antwortet aktuell nicht.</p>
         </div>
         """
     else:
@@ -187,7 +186,12 @@ def generate_html(movies):
             html += f"""
             <div class="row-container">
                 <div class="box rank-box"><div class="rank-val">{m['rank']}</div></div>
-                <div class="box title-box"><div class="movie-title">{m['title']}</div></div>
+                
+                <!-- Titel Box mit Schutz vor Überbreite -->
+                <div class="box title-box" title="{m['title']}">
+                    <div class="movie-title">{m['title']}</div>
+                </div>
+                
                 <div class="box days-box"><div class="days-val">{m['days']}</div><div class="days-label">TAGE</div></div>
                 <div class="box daily-box"><div class="label-green">BESUCHER HEUTE</div><div class="val-big">{m['daily']}</div></div>
                 <div class="box total-box"><div class="label-blue">GESAMT</div><div class="val-big">{m['total']}</div></div>
@@ -196,13 +200,17 @@ def generate_html(movies):
 
     html += """
     </div>
+    <div style="margin-top:20px; font-size:0.7rem; color:#444; text-align:center;">Quelle: KOBIZ Data</div>
 </body>
 </html>
     """
     
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html)
-    print("HTML Datei geschrieben.")
+    try:
+        with open("index.html", "w", encoding="utf-8") as f:
+            f.write(html)
+        print("HTML Datei geschrieben.")
+    except Exception as e:
+        print(f"Fehler beim Schreiben: {e}")
 
 if __name__ == "__main__":
     data = get_data()
