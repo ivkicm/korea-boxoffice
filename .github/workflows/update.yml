@@ -1,0 +1,39 @@
+name: Update Korea Box Office
+
+on:
+  schedule:
+    # 05:01 UTC = 06:01 Deutsche Zeit (Winter) / 07:01 (Sommer)
+    - cron: '1 5 * * *'
+  workflow_dispatch: # Erlaubt manuelles Starten zum Testen
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Libraries
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Scraper Script
+        run: |
+          python scrape.py
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add index.html
+          # Nur committen, wenn sich was geändert hat
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update Daily Data" && git push)
