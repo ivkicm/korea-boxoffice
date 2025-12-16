@@ -5,136 +5,159 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Korea Box Office</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800;900&family=Inter:wght@800;900&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #000000; color: #ffffff; font-family: 'JetBrains Mono', monospace; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        :root { 
+            --bg: #000000; 
+            --box-bg: #111; 
+            --border: #333;
+            --text-main: #ffffff;
+            --text-dim: #999;
+            --green: #00FF41; 
+            --blue: #00C2FF;  
+            --gold: #FFD700;
+        }
+        * { box-sizing: border-box; }
         
-        .header { 
-            font-size: 2.5rem; font-weight: 900; text-transform: uppercase; 
-            margin-bottom: 30px; letter-spacing: 2px; text-align: center; 
-            border-bottom: 2px solid #333; padding-bottom: 10px; width: 100%; max-width: 1200px; 
-            display: flex; align-items: center; justify-content: center; gap: 20px;
+        body { 
+            margin: 0; 
+            padding: 0.5vh 2vw; 
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            height: 100vh; width: 100vw; 
+            overflow: hidden; 
+            display: flex; flex-direction: column; 
+            justify-content: flex-start; 
         }
 
-        .flag-img { height: 50px; width: auto; border-radius: 4px; }
-        
-        .grid-wrapper { width: 100%; max-width: 1200px; display:flex; flex-direction:column; gap:15px; }
+        /* HEADER */
+        .header-container {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 0.5vh;
+            border-bottom: 1px solid #222;
+            padding-bottom: 0.5vh;
+            padding-top: 1vh;
+            flex: 0 0 auto;
+            display: flex; justify-content: center; align-items: center; gap: 1vw;
+        }
 
-        .row-container { 
-            display: grid; 
-            grid-template-columns: 80px 1.5fr 100px 1fr 1fr; 
-            gap: 15px; 
-            height: 100px; 
+        .flag-img { height: 5vh; width: auto; border-radius: 4px; }
+
+        h1 { 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 5.5vh; 
+            font-weight: 800;
+            color: #ffffff; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+            line-height: 1;
         }
-        
-        .box { 
-            border: 2px solid #fff; border-radius: 8px; 
-            display: flex; flex-direction: column; justify-content: center; 
-            padding: 0 15px; background: #0a0a0a; 
-            min-width: 0;
+
+        .list-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8vh; 
+            width: 100%; 
+            flex: 1 1 auto; 
+            justify-content: center;
         }
-        
-        .rank-box { border-color: #FFD700; align-items: center; }
-        .rank-val { color: #FFD700; font-size: 3.5rem; font-weight: 900; line-height: 1; }
-        
-        .title-box { border-color: #ffffff; justify-content: center; }
-        .movie-title { 
-            font-size: 1.5rem; font-weight: 800; text-transform: uppercase; 
-            line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            width: 100%; display: block;
+
+        .movie-row {
+            display: grid;
+            /* Layout wie US: Title breit, Tage schmal */
+            grid-template-columns: 3.5fr 0.5fr 3fr 3fr; 
+            gap: 0.8vw; 
+            height: 15.5vh; 
+            width: 100%;
         }
-        
-        .days-box { border-color: #666; align-items: center; }
-        /* SCHRIFTGRÖSSE ERHÖHT (Tage) */
-        .days-val { font-size: 3.5rem; font-weight: 800; line-height: 1; }
-        .days-label { font-size: 0.6rem; color: #888; text-transform: uppercase; margin-top: 5px; }
-        
-        .daily-box { border-color: #39FF14; align-items: flex-end; }
-        .label-green { color: #39FF14; font-size: 0.7rem; font-weight: 800; margin-bottom: 2px; }
-        /* SCHRIFTGRÖSSE ERHÖHT (Besucher) */
-        .val-big { font-size: 2.8rem; font-weight: 800; line-height: 1; }
-        
-        .total-box { border-color: #00F0FF; align-items: flex-end; }
-        .label-blue { color: #00F0FF; font-size: 0.7rem; font-weight: 800; margin-bottom: 2px; }
-        
-        @media (max-width: 800px) {
-            .row-container { grid-template-columns: 60px 1fr; height: auto; padding-bottom: 20px; border-bottom:1px solid #333; }
-            .rank-box { grid-row: 1 / 3; height: 100%; }
-            .title-box { height: 60px; }
-            .days-box, .daily-box, .total-box { height: 70px; }
+
+        .box {
+            background-color: var(--box-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 0 1vw;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            overflow: hidden;
         }
+
+        /* 1. RANK & NAME */
+        .box-title {
+            display: flex; flex-direction: row; 
+            align-items: center; justify-content: flex-start;
+            border-left: 5px solid #fff;
+        }
+        .rank-1 .box-title { border-left: 5px solid var(--gold); background: linear-gradient(90deg, #1a1a00, #111); }
+
+        .rank {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 5vh; font-weight: 900; color: #555;
+            margin-right: 1.5vw; min-width: 40px;
+        }
+        .rank-1 .rank { color: var(--gold); text-shadow: 0 0 15px rgba(255,215,0,0.5); }
+        
+        .title {
+            font-size: 2.8vh; font-weight: 800; text-transform: uppercase;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1;
+        }
+
+        /* 2. TAGE */
+        .box-days { align-items: center; border-top: 2px solid #333; }
+        .days-val { 
+            font-family: 'JetBrains Mono'; 
+            font-size: 5vh; 
+            font-weight: 900; color: #ddd; line-height: 0.9;
+        }
+        .label-center { font-size: 1.6vh; font-weight: 700; text-transform: uppercase; color: var(--text-dim); margin-top: 0.5vh;}
+
+        /* 3. DAILY */
+        .box-daily {
+            align-items: flex-end; 
+            border-bottom: 5px solid var(--green); 
+            background: linear-gradient(180deg, var(--box-bg), #001a05);
+        }
+        .val-daily { 
+            font-family: 'JetBrains Mono'; 
+            font-size: 6.5vh; /* Etwas kleiner als US weil Zahlen länger sein können */
+            font-weight: 900; color: #fff; 
+            letter-spacing: -2px; 
+            line-height: 0.8; 
+            text-shadow: 0 0 20px rgba(0,255,65,0.4);
+        }
+        .lbl-daily { color: var(--green); font-size: 1.6vh; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5vh; }
+
+        /* 4. TOTAL */
+        .box-total {
+            align-items: flex-end; 
+            border-bottom: 5px solid var(--blue); 
+            background: linear-gradient(180deg, var(--box-bg), #00121a);
+        }
+        .val-total { 
+            font-family: 'JetBrains Mono'; 
+            font-size: 6.5vh; /* Etwas kleiner als US */
+            font-weight: 900; color: #ccc; 
+            letter-spacing: -2px; 
+            line-height: 0.8;
+        }
+        .lbl-total { color: var(--blue); font-size: 1.6vh; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5vh; }
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="header-container">
         <img src="https://upload.wikimedia.org/wikipedia/commons/0/09/Flag_of_South_Korea.svg" class="flag-img" alt="Korea">
-        <span>SÜDKOREA KINOCHARTS | 16.12.2025</span>
+        <h1>
+            <span>SÜDKOREA</span>
+            <span style="color:#444; margin:0 20px;">|</span>
+            <span>16.12.2025</span>
+        </h1>
     </div>
-
-    <div class="grid-wrapper">
     
-            <div class="row-container">
-                <div class="box rank-box"><div class="rank-val">1</div></div>
-                
-                <div class="box title-box" title="Zootopia 2">
-                    <div class="movie-title">Zootopia 2</div>
-                </div>
-                
-                <div class="box days-box"><div class="days-val">20</div><div class="days-label">TAGE</div></div>
-                <div class="box daily-box"><div class="label-green">BESUCHER HEUTE</div><div class="val-big">81,922</div></div>
-                <div class="box total-box"><div class="label-blue">GESAMT</div><div class="val-big">5,452,508</div></div>
-            </div>
-            
-            <div class="row-container">
-                <div class="box rank-box"><div class="rank-val">2</div></div>
-                
-                <div class="box title-box" title="The People Upstairs">
-                    <div class="movie-title">The People Upstairs</div>
-                </div>
-                
-                <div class="box days-box"><div class="days-val">13</div><div class="days-label">TAGE</div></div>
-                <div class="box daily-box"><div class="label-green">BESUCHER HEUTE</div><div class="val-big">19,175</div></div>
-                <div class="box total-box"><div class="label-blue">GESAMT</div><div class="val-big">428,416</div></div>
-            </div>
-            
-            <div class="row-container">
-                <div class="box rank-box"><div class="rank-val">3</div></div>
-                
-                <div class="box title-box" title="JUJUTSU KAISEN: Shibuya Incident /Culling Game - The Movie">
-                    <div class="movie-title">JUJUTSU KAISEN: Shibuya Incident /Culling Game - The Movie</div>
-                </div>
-                
-                <div class="box days-box"><div class="days-val">13</div><div class="days-label">TAGE</div></div>
-                <div class="box daily-box"><div class="label-green">BESUCHER HEUTE</div><div class="val-big">6,528</div></div>
-                <div class="box total-box"><div class="label-blue">GESAMT</div><div class="val-big">306,570</div></div>
-            </div>
-            
-            <div class="row-container">
-                <div class="box rank-box"><div class="rank-val">4</div></div>
-                
-                <div class="box title-box" title="Five Nights at Freddy's 2">
-                    <div class="movie-title">Five Nights at Freddy's 2</div>
-                </div>
-                
-                <div class="box days-box"><div class="days-val">13</div><div class="days-label">TAGE</div></div>
-                <div class="box daily-box"><div class="label-green">BESUCHER HEUTE</div><div class="val-big">6,159</div></div>
-                <div class="box total-box"><div class="label-blue">GESAMT</div><div class="val-big">184,812</div></div>
-            </div>
-            
-            <div class="row-container">
-                <div class="box rank-box"><div class="rank-val">5</div></div>
-                
-                <div class="box title-box" title="Wicked: For Good">
-                    <div class="movie-title">Wicked: For Good</div>
-                </div>
-                
-                <div class="box days-box"><div class="days-val">27</div><div class="days-label">TAGE</div></div>
-                <div class="box daily-box"><div class="label-green">BESUCHER HEUTE</div><div class="val-big">5,439</div></div>
-                <div class="box total-box"><div class="label-blue">GESAMT</div><div class="val-big">932,818</div></div>
-            </div>
-            
+    <div class="list-wrapper">
+    <h2 style='text-align:center; color:red; margin-top:20vh;'>KEINE DATEN VERFÜGBAR</h2>
     </div>
-    <div style="margin-top:20px; font-size:0.7rem; color:#444; text-align:center;">Quelle: KOBIZ Data</div>
 </body>
 </html>
     
