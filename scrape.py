@@ -162,7 +162,7 @@ def generate_html(movies):
         .rank-1 .rank { color: var(--gold); text-shadow: 0 0 15px rgba(255,215,0,0.5); }
         
         .title {
-            font-size: 2.8vh; font-weight: 800; text-transform: uppercase;
+            font-size: 4.5vh; font-weight: 800; text-transform: uppercase;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1;
         }
 
